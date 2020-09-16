@@ -15,7 +15,9 @@
   "extensions": [
     "esbenp.prettier-vscode",
     "dbaeumer.vscode-eslint",
-    "eamodio.gitlens"
+    "eamodio.gitlens",
+    "gruntfuggly.todo-tree",
+    "alefragnani.bookmarks"
   ],
 
   "workspaceFolder": "/workspace",

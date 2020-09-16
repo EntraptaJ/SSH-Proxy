@@ -8,8 +8,12 @@ import { History } from '../History/HistoryModel';
 import { Host } from '../Hosts/HostModel';
 import { User } from '../Users/UserModel';
 import { Session } from '../Session/SessionModel';
+import { SessionStatus } from '../Session/SessionState';
 
-export async function startSSHServer(): Promise<any> {
+/**
+ * Start the SSH Proxy Server
+ */
+export async function startSSHServer(): Promise<SSHServer> {
   /**
    * Generate host Keys with Node Forge
    */
@@ -59,7 +63,7 @@ export async function startSSHServer(): Promise<any> {
       }
 
       /**
-       * Join the username again
+       * Join the username again with `.` to support usernames inclduing `.`
        */
       const username = usernameArray.join('.');
 
@@ -94,6 +98,8 @@ export async function startSSHServer(): Promise<any> {
             ctx.reject();
           }
 
+          console.log('??');
+
           ctx.accept();
         default:
           ctx.reject();
@@ -104,14 +110,21 @@ export async function startSSHServer(): Promise<any> {
 
     client.on('ready', (msg) => {
       client.on('session', async (accept, reject) => {
+        const session = accept();
+
         const sessionRecord = Session.create({
           user,
           host,
+          sessionStatus: SessionStatus.AUTHENICATING,
         });
 
-        const session = accept();
-
         await sessionRecord.save();
+
+        console.log('Session record: ', sessionRecord);
+
+        await sessionRecord.reload();
+
+        console.log('SessionRecod: ', sessionRecord);
 
         /**
          * Connect to the end host via SSH repeating the users credentials
@@ -123,7 +136,16 @@ export async function startSSHServer(): Promise<any> {
         });
 
         session.on('shell', (accept, reject) => {
-          destSession.on('ready', () => {
+          destSession.on('ready', async () => {
+            await Session.update(
+              {
+                id: sessionRecord.id,
+              },
+              {
+                sessionStatus: SessionStatus.CONNECTED,
+              }
+            );
+
             destSession.on('continue', () => {
               console.log('Session onContinue');
             });
@@ -167,6 +189,14 @@ export async function startSSHServer(): Promise<any> {
         });
 
         session.on('close', async () => {
+          await Session.update(
+            {
+              id: sessionRecord.id,
+            },
+            {
+              sessionStatus: SessionStatus.EXIT,
+            }
+          );
           /**
            * Save the history entry once the user has closed the session
            */

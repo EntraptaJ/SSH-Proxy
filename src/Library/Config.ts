@@ -66,7 +66,7 @@ export const config: Config = {
   database: {
     hostname: process.env.DB_HOST || 'Database',
     port: parseInt(process.env.DB_PORT || '5432'),
-    database: process.env.DB_DATABASE || 'SSH-Proxy',
+    database: process.env.DB_DATABASE || 'ssh-proxy',
     username: process.env.DB_USER || 'postgres',
     password: process.env.DB_PASS || 'pgpass',
   },
