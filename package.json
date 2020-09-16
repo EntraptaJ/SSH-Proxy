@@ -4,20 +4,15 @@
   "description": "SSH Proxy",
   "main": "src/index.ts",
   "dependencies": {
-    "generic-stdout-parser": "^1.0.1",
     "node-forge": "^0.10.0",
-    "node-shell-parser": "^0.2.1",
     "pg": "^8.3.3",
     "ssh2": "^0.8.9",
-    "ssh2-promise": "^0.1.7",
-    "ssh2-streams": "^0.4.10",
     "typeorm": "^0.2.26"
   },
   "devDependencies": {
     "@k-foss/ts-esnode": "^1.7.0",
     "@types/node-forge": "^0.9.5",
     "@types/ssh2": "^0.5.44",
-    "@types/ssh2-streams": "^0.1.7",
     "nodemon": "^2.0.4",
     "typescript": "^4.0.2"
   },

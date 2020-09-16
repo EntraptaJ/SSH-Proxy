@@ -7,7 +7,6 @@ import { getHostKeys } from '../Crypto/Keys';
 import { History } from '../History/HistoryModel';
 import { Host } from '../Hosts/HostModel';
 import { User } from '../Users/UserModel';
-import Parser from 'generic-stdout-parser';
 import { Session } from '../Session/SessionModel';
 
 export async function startSSHServer(): Promise<any> {
@@ -150,10 +149,6 @@ export async function startSSHServer(): Promise<any> {
                 });
 
                 await history.save();
-                /**
-                 * On incoming data from the server, append to thee shellOutput on the history record
-                 */
-                history.shellOutput += msg.toString();
               });
 
               /**
