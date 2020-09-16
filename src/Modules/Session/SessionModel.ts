@@ -1,35 +1,30 @@
-// src/Modules/History/HistoryModel.ts
+// src/Modules/SessionModel.ts
 import {
   BaseEntity,
-  Column,
   CreateDateColumn,
   Entity,
-  JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+import { History } from '../History/HistoryModel';
 import { Host } from '../Hosts/HostModel';
-import { Session } from '../Session/SessionModel';
 import { User } from '../Users/UserModel';
 
 @Entity()
-export class History extends BaseEntity {
+export class Session extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
-  public id: string;
+  public readonly id: string;
 
   @CreateDateColumn()
-  public date: Date;
+  public readonly startDate: Date;
 
-  @Column('text')
-  public shellOutput: string;
+  @OneToMany(() => History, (history) => history.session)
+  public history: History[];
 
   @ManyToOne(() => User)
   public user: User;
 
   @ManyToOne(() => Host)
   public host: Host;
-
-  @ManyToOne(() => Session)
-  @JoinColumn()
-  public session: Session;
 }
