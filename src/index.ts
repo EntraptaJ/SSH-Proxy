@@ -10,7 +10,7 @@ console.info('Connecting to Database');
 /**
  * Connect to database
  */
-const database = await connectDatabase();
+await connectDatabase();
 
 console.info('Database Connected');
 

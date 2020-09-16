@@ -25,7 +25,9 @@ export class History extends BaseEntity {
   public date: Date;
 
   @Field()
-  @Column('text')
+  @Column('text', {
+    select: false,
+  })
   public shellOutput: string;
 
   @ManyToOne(() => User)

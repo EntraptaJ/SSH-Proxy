@@ -8,6 +8,7 @@
     "class-validator": "^0.12.2",
     "graphql": "^15.3.0",
     "node-forge": "^0.10.0",
+    "p-event": "^4.2.0",
     "pg": "^8.3.3",
     "reflect-metadata": "^0.1.13",
     "ssh2": "^0.8.9",

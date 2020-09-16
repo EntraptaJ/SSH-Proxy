@@ -1,6 +1,6 @@
 // src/Modules/SSH/Server.ts
 
-import { Client as SSHClient, Server as SSHServer } from 'ssh2';
+import { AuthContext, Client as SSHClient, Server as SSHServer } from 'ssh2';
 import { getConnection } from 'typeorm';
 import { config } from '../../Library/Config';
 import { getHostKeys } from '../Crypto/Keys';
@@ -9,6 +9,8 @@ import { Host } from '../Hosts/HostModel';
 import { User } from '../Users/UserModel';
 import { Session } from '../Session/SessionModel';
 import { SessionStatus } from '../Session/SessionState';
+import pEvent from 'p-event';
+import { performAuth } from './Auth';
 
 /**
  * Start the SSH Proxy Server
@@ -26,7 +28,7 @@ export async function startSSHServer(): Promise<SSHServer> {
   /**
    * On Client connection to SSH server
    */
-  sshServer.on('connection', (client) => {
+  sshServer.on('connection', async (client) => {
     /**
      * Host database entry
      */
@@ -42,181 +44,115 @@ export async function startSSHServer(): Promise<SSHServer> {
      */
     let destSession: SSHClient = new SSHClient();
 
-    client.on('authentication', async (ctx) => {
-      /**
-       * Split username to array with "." as the seperator
-       */
-      const usernameArray = ctx.username.split('.');
+    for await (const authCtx of pEvent.iterator<string, AuthContext>(
+      client,
+      'authentication',
+      {
+        resolutionEvents: ['ready'],
+      }
+    )) {
+      try {
+        const authResponse = await performAuth(authCtx);
+
+        console.log('Auth Successful');
+        authCtx.accept();
+
+        host = authResponse.host;
+        user = authResponse.user;
+      } catch (err) {
+        console.log(err);
+        authCtx.reject();
+      }
+    }
+
+    const sessionRecord = Session.create({
+      user,
+      host,
+      sessionStatus: SessionStatus.AUTHENICATING,
+    });
+
+    console.log('Client ready');
+
+    for await (const accept of pEvent.iterator(client, 'session', {
+      resolutionEvents: ['close'],
+    })) {
+      const session = accept();
+
+      session.on('pty', (accept, reject, info) => {
+        accept();
+      });
+
+      await sessionRecord.save();
+
+      console.log('Session record: ', sessionRecord);
+
+      await sessionRecord.reload();
+
+      console.log('SessionRecod: ', sessionRecord);
 
       /**
-       * Pop off the last entry I.E "root.host1" and find the database record for that hostname
+       * Connect to the end host via SSH repeating the users credentials
        */
-      const hostKey = usernameArray.pop();
-      host = await Host.findOne({
-        where: {
-          key: hostKey,
+      destSession.connect({
+        host: host.hostname,
+        username: user.username,
+        password: user.password,
+      });
+
+      const [acceptShell] = await Promise.all([
+        pEvent<string, Function>(session, 'shell'),
+        pEvent(destSession, 'ready'),
+      ]);
+
+      const serverChannel = acceptShell();
+
+      await Session.update(
+        {
+          id: sessionRecord.id,
         },
-      });
+        {
+          sessionStatus: SessionStatus.CONNECTED,
+        }
+      );
 
-      if (!host) {
-        ctx.reject();
-      }
+      destSession.shell((err, channel) => {
+        if (err) {
+          console.error('Error: ', err);
+        }
 
-      /**
-       * Join the username again with `.` to support usernames inclduing `.`
-       */
-      const username = usernameArray.join('.');
+        console.log('helloWorld');
 
-      user = await getConnection()
-        .getRepository(User)
-        .createQueryBuilder('user')
-        .leftJoinAndSelect('user.allowedHosts', 'allowedHosts')
-        .where('user.username = :username', { username })
-        .andWhere('allowedHosts.id = :hostId', { hostId: host.id })
-        .getOne();
-
-      if (!user) {
-        console.warn(`User ${username} doesn't exist. Rejecting Connection`);
-        ctx.reject();
-      }
-
-      if (!user.allowedHosts) {
-        console.warn(`${username} attempting to access ${host.hostname}`);
-
-        ctx.reject();
-      }
-
-      switch (ctx.method) {
-        case 'password':
-          const password = ctx.password;
-
-          /**
-           * Check that the incoming password matches what is in the database
-           */
-          if (user.password !== password) {
-            console.log(`User password doesn't match`);
-            ctx.reject();
-          }
-
-          console.log('??');
-
-          ctx.accept();
-        default:
-          ctx.reject();
-      }
-
-      ctx.accept();
-    });
-
-    client.on('ready', (msg) => {
-      client.on('session', async (accept, reject) => {
-        const session = accept();
-
-        const sessionRecord = Session.create({
-          user,
-          host,
-          sessionStatus: SessionStatus.AUTHENICATING,
+        channel.on('exit', () => {
+          console.log('OnExit');
+          serverChannel.close;
         });
 
-        await sessionRecord.save();
-
-        console.log('Session record: ', sessionRecord);
-
-        await sessionRecord.reload();
-
-        console.log('SessionRecod: ', sessionRecord);
-
-        /**
-         * Connect to the end host via SSH repeating the users credentials
-         */
-        destSession.connect({
-          host: host.hostname,
-          username: user.username,
-          password: user.password,
-        });
-
-        session.on('shell', (accept, reject) => {
-          destSession.on('ready', async () => {
-            await Session.update(
-              {
-                id: sessionRecord.id,
-              },
-              {
-                sessionStatus: SessionStatus.CONNECTED,
-              }
-            );
-
-            destSession.on('continue', () => {
-              console.log('Session onContinue');
-            });
-
-            destSession.shell((err, channel) => {
-              if (err) {
-                console.error('Error: ', err);
-                reject();
-              }
-
-              const serverChannel = accept();
-
-              channel.on('exit', () => {
-                console.log('OnExit');
-              });
-
-              channel.on('data', async (msg, ...test) => {
-                let history = History.create({
-                  host,
-                  user,
-                  shellOutput: msg.toString(),
-                  session: sessionRecord,
-                });
-
-                await history.save();
-              });
-
-              /**
-               * Pipe from client to serer, back into client
-               */
-              channel.pipe(serverChannel).pipe(channel);
-            });
+        channel.on('data', async (msg) => {
+          let history = History.create({
+            host,
+            user,
+            shellOutput: msg.toString(),
+            session: sessionRecord,
           });
+
+          await history.save();
         });
 
         /**
-         * Auto accept PTY Requests
+         * Pipe from client to serer, back into client
          */
-        session.on('pty', (accept, reject, info) => {
-          accept();
-        });
-
-        session.on('close', async () => {
-          await Session.update(
-            {
-              id: sessionRecord.id,
-            },
-            {
-              sessionStatus: SessionStatus.EXIT,
-            }
-          );
-          /**
-           * Save the history entry once the user has closed the session
-           */
-          console.log('Ending seesion');
-        });
-
-        /**
-         * TODO: Get Exec Working
-         */
-        session.once('exec', (accept, reject, info) => {
-          console.log(`Client wants to exec`);
-
-          var stream = accept();
-          stream.stderr.write('Oh no, the dreaded errors!\n');
-          stream.write('Just kidding about the errors!\n');
-          stream.exit(0);
-          stream.end();
-        });
+        channel.pipe(serverChannel).pipe(channel);
       });
-    });
+    }
+
+    await Session.update(
+      {
+        id: sessionRecord.id,
+      },
+      {
+        sessionStatus: SessionStatus.EXIT,
+      }
+    );
   });
 
   return sshServer.listen(config.ssh.port, config.ssh.bindHost);
