@@ -14,13 +14,10 @@ export async function performAuth(
    */
   const usernameArray = ctx.username.split('.');
 
-  console.log(usernameArray);
-
   /**
    * Pop off the last entry I.E "root.host1" and find the database record for that hostname
    */
   const hostKey = usernameArray.pop();
-  console.log(hostKey);
 
   const host = await Host.findOne({
     relations: ['credentials'],
@@ -28,8 +25,6 @@ export async function performAuth(
       key: hostKey,
     },
   });
-
-  console.log(host, hostKey);
 
   if (!host) {
     throw new Error('Invalid Host');
@@ -55,14 +50,10 @@ export async function performAuth(
       .getOne(),
   ]);
 
-  console.log(user, credentials);
-
   if (!user) {
     console.warn(`User ${username} doesn't exist. Rejecting Connection`);
     throw new Error('Invalid User');
   }
-
-  console.log(ctx.method);
 
   switch (ctx.method) {
     case 'password':
@@ -74,7 +65,7 @@ export async function performAuth(
         throw new Error('Invalid Password');
       }
 
-      console.log('Password correct');
+      console.log('Active auth');
 
       return {
         user,

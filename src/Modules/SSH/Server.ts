@@ -1,6 +1,15 @@
 // src/Modules/SSH/Server.ts
 
-import { AuthContext, Client as SSHClient, Server as SSHServer } from 'ssh2';
+import {
+  AuthContext,
+  Client as SSHClient,
+  PseudoTtyInfo,
+  Server as SSHServer,
+  ServerChannel,
+  utils,
+} from 'ssh2';
+import { promisify } from 'util';
+import type { Session as SSHSession } from 'ssh2';
 import { config } from '../../Library/Config';
 import { getHostKeys } from '../Crypto/Keys';
 import { History } from '../History/HistoryModel';
@@ -11,6 +20,7 @@ import { SessionStatus } from '../Session/SessionState';
 import pEvent from 'p-event';
 import { performAuth } from './Auth';
 import { Credential } from '../Credentials/CredentialModel';
+import { execCommand } from './Utils';
 
 /**
  * Start the SSH Proxy Server
@@ -41,6 +51,8 @@ export async function startSSHServer(): Promise<SSHServer> {
 
     let credentials: Credential;
 
+    let pty: PseudoTtyInfo;
+
     /**
      * SSH Session
      */
@@ -67,19 +79,34 @@ export async function startSSHServer(): Promise<SSHServer> {
       }
     }
 
+    console.log('Client Ready');
+
     const sessionRecord = Session.create({
       user,
       host,
       sessionStatus: SessionStatus.AUTHENICATING,
     });
 
-    for await (const accept of pEvent.iterator(client, 'session', {
-      resolutionEvents: ['close'],
-    })) {
+    for await (const accept of pEvent.iterator<string, () => SSHSession>(
+      client,
+      'session',
+      {
+        resolutionEvents: ['end'],
+      }
+    )) {
+      console.log('Session created');
+
       const session = accept();
 
       session.on('pty', (accept, reject, info) => {
+        console.log('Starting PTY', info);
+
+        pty = info;
         accept();
+      });
+
+      session.on('signal', (...msg) => {
+        console.log('Recieved Signal: ', ...msg);
       });
 
       await sessionRecord.save();
@@ -93,36 +120,99 @@ export async function startSSHServer(): Promise<SSHServer> {
         password: credentials.password,
       });
 
-      const [acceptShell] = await Promise.all([
-        pEvent<string, Function>(session, 'shell'),
-        pEvent(destSession, 'ready'),
-      ]);
+      destSession.on('data', () => {
+        console.log('Dest session data?');
+      });
 
-      const serverChannel = acceptShell();
+      session.on('sftp', () => {
+        console.log('SFTP');
+      });
 
-      await Session.update(
-        {
-          id: sessionRecord.id,
-        },
-        {
-          sessionStatus: SessionStatus.CONNECTED,
-        }
-      );
+      session.on('env', (...data) => {
+        console.log('Env', data);
+      });
 
-      destSession.shell((err, channel) => {
-        if (err) {
-          console.error('Error: ', err);
-        }
+      session.on('shell', async (acceptShell, reject) => {
+        // TODO: Handle dest session not "ready"ing / rejcet
+        await pEvent(destSession, 'ready');
 
-        channel.on('exit', () => {
-          serverChannel.close;
+        const serverChannel = acceptShell();
+
+        await Session.update(
+          {
+            id: sessionRecord.id,
+          },
+          {
+            sessionStatus: SessionStatus.CONNECTED,
+          }
+        );
+
+        destSession.shell(
+          {
+            ...pty,
+          },
+          (err, channel) => {
+            if (err) {
+              console.error('Error: ', err);
+            }
+
+            channel.on('exit', () => {
+              serverChannel.close();
+            });
+
+            let line = ``;
+
+            channel.on('data', async (msg) => {
+              line += msg.toString();
+
+              if (line.endsWith('\r\n')) {
+                for (const newLine of line.split('\r\n')) {
+                  let history = History.create({
+                    host,
+                    user,
+                    shellOutput: newLine,
+                    session: sessionRecord,
+                  });
+
+                  await history.save();
+                }
+                line = ``;
+              }
+            });
+
+            /**
+             * Pipe from client to serer, back into client
+             */
+            channel.pipe(serverChannel).pipe(channel);
+          }
+        );
+
+        console.log('Dest Session Ready');
+      });
+
+      session.on('exec', async (accept, reject, info) => {
+        console.log('Got exec request', info);
+
+        await pEvent(destSession, 'ready');
+        console.log('Exec dest session is ready');
+
+        const execChannel = accept();
+
+        console.log('Execing on dest server');
+
+        const clientStream = await execCommand(info.command, destSession, {
+          pty,
         });
-
-        const output = [];
 
         let line = ``;
 
-        channel.on('data', async (msg) => {
+        execChannel.on('data', (msg) => {
+          console.log('ExecChannel Data', msg.toString());
+        });
+
+        clientStream.on('data', async (msg) => {
+          console.log('clientData: ', msg.toString());
+
           line += msg.toString();
 
           if (line.endsWith('\r\n')) {
@@ -140,12 +230,15 @@ export async function startSSHServer(): Promise<SSHServer> {
           }
         });
 
-        /**
-         * Pipe from client to serer, back into client
-         */
-        channel.pipe(serverChannel).pipe(channel);
+        execChannel.pipe(clientStream).pipe(execChannel);
       });
+
+      console.log('HelloWorld');
     }
+
+    console.log('Session Done');
+
+    await sessionRecord.reload();
 
     await Session.update(
       {
