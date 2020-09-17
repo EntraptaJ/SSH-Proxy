@@ -1,6 +1,13 @@
-import { Field, ID, ObjectType } from 'type-graphql';
 // src/Modules/Hosts/HostModel.ts
-import { BaseEntity, Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Field, ID, ObjectType } from 'type-graphql';
+import {
+  BaseEntity,
+  Column,
+  Entity,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
+import { Credential } from '../Credentials/CredentialModel';
 
 @ObjectType()
 @Entity()
@@ -16,4 +23,7 @@ export class Host extends BaseEntity {
   @Field()
   @Column('varchar')
   public key: string;
+
+  @OneToMany('Credential', 'host')
+  public credentials: Credential[];
 }

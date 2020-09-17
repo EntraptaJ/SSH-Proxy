@@ -33,7 +33,7 @@ export class Session extends BaseEntity {
   public sessionStatus: SessionStatus;
 
   @Field(() => [History])
-  @OneToMany(() => History, (history) => history.session)
+  @OneToMany('History', 'session')
   public history: History[];
 
   @ManyToOne(() => User)

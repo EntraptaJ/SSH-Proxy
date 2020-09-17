@@ -36,6 +36,7 @@ export class SessionResolver implements ResolverInterface<Session> {
   @FieldResolver(() => [History])
   public async history(@Root() { id }: Session): Promise<History[]> {
     return History.find({
+      select: ['id', 'host', 'shellOutput', 'user', 'shellOutput', 'date'],
       where: {
         session: id,
       },

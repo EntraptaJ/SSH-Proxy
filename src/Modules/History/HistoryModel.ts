@@ -36,7 +36,7 @@ export class History extends BaseEntity {
   @ManyToOne(() => Host)
   public host: Host;
 
-  @ManyToOne(() => Session)
+  @ManyToOne('Session', 'history')
   @JoinColumn()
   public session: Session;
 }

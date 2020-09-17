@@ -1,7 +1,6 @@
 // src/Modules/SSH/Server.ts
 
 import { AuthContext, Client as SSHClient, Server as SSHServer } from 'ssh2';
-import { getConnection } from 'typeorm';
 import { config } from '../../Library/Config';
 import { getHostKeys } from '../Crypto/Keys';
 import { History } from '../History/HistoryModel';
@@ -11,6 +10,7 @@ import { Session } from '../Session/SessionModel';
 import { SessionStatus } from '../Session/SessionState';
 import pEvent from 'p-event';
 import { performAuth } from './Auth';
+import { Credential } from '../Credentials/CredentialModel';
 
 /**
  * Start the SSH Proxy Server
@@ -39,6 +39,8 @@ export async function startSSHServer(): Promise<SSHServer> {
      */
     let user: User;
 
+    let credentials: Credential;
+
     /**
      * SSH Session
      */
@@ -54,11 +56,11 @@ export async function startSSHServer(): Promise<SSHServer> {
       try {
         const authResponse = await performAuth(authCtx);
 
-        console.log('Auth Successful');
         authCtx.accept();
 
         host = authResponse.host;
         user = authResponse.user;
+        credentials = authResponse.credentials;
       } catch (err) {
         console.log(err);
         authCtx.reject();
@@ -71,8 +73,6 @@ export async function startSSHServer(): Promise<SSHServer> {
       sessionStatus: SessionStatus.AUTHENICATING,
     });
 
-    console.log('Client ready');
-
     for await (const accept of pEvent.iterator(client, 'session', {
       resolutionEvents: ['close'],
     })) {
@@ -84,19 +84,13 @@ export async function startSSHServer(): Promise<SSHServer> {
 
       await sessionRecord.save();
 
-      console.log('Session record: ', sessionRecord);
-
-      await sessionRecord.reload();
-
-      console.log('SessionRecod: ', sessionRecord);
-
       /**
        * Connect to the end host via SSH repeating the users credentials
        */
       destSession.connect({
         host: host.hostname,
-        username: user.username,
-        password: user.password,
+        username: credentials.username,
+        password: credentials.password,
       });
 
       const [acceptShell] = await Promise.all([
@@ -120,22 +114,30 @@ export async function startSSHServer(): Promise<SSHServer> {
           console.error('Error: ', err);
         }
 
-        console.log('helloWorld');
-
         channel.on('exit', () => {
-          console.log('OnExit');
           serverChannel.close;
         });
 
-        channel.on('data', async (msg) => {
-          let history = History.create({
-            host,
-            user,
-            shellOutput: msg.toString(),
-            session: sessionRecord,
-          });
+        const output = [];
 
-          await history.save();
+        let line = ``;
+
+        channel.on('data', async (msg) => {
+          line += msg.toString();
+
+          if (line.endsWith('\r\n')) {
+            for (const newLine of line.split('\r\n')) {
+              let history = History.create({
+                host,
+                user,
+                shellOutput: newLine,
+                session: sessionRecord,
+              });
+
+              await history.save();
+            }
+            line = ``;
+          }
         });
 
         /**

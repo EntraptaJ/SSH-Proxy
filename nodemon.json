@@ -2,6 +2,6 @@
   "signal": "SIGHUP",
   "watch": ["src"],
   "ext": "ts",
-  "ignore": ["src/**/*.test.ts"],
+  "ignore": ["src/**/*.test.ts", "src/Library/Replayer.ts"],
   "exec": "npm run dev:start"
 }

@@ -26,7 +26,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon",
-    "dev:start": "node --loader @k-foss/ts-esnode --experimental-specifier-resolution=node ."
+    "dev:start": "node --loader @k-foss/ts-esnode --experimental-specifier-resolution=node .",
+    "dev:replay": "node --loader @k-foss/ts-esnode --experimental-specifier-resolution=node ./src/Library/Replayer.ts"
   },
   "author": "",
   "license": "ISC"
