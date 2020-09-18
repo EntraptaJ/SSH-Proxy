@@ -6,13 +6,10 @@ import {
   Mutation,
   Query,
   Resolver,
-  ResolverInterface,
   Root,
 } from 'type-graphql';
-import { getConnection } from 'typeorm';
 import { CredentialInput } from '../Credentials/CredentialInput';
 import { Credential } from '../Credentials/CredentialModel';
-import { User } from '../Users/UserModel';
 import { HostInput } from './HostInput';
 import { Host } from './HostModel';
 
@@ -25,7 +22,7 @@ export class HostResovler {
 
   @Mutation(() => [Host])
   public async createHost(
-    @Arg('input', () => HostInput) input: HostInput
+    @Arg('input', () => HostInput) input: HostInput,
   ): Promise<Host[]> {
     const host = Host.create(input);
 
@@ -37,7 +34,7 @@ export class HostResovler {
   @Mutation(() => Host)
   public async addCredential(
     @Arg('hostId', () => ID) hostId: string,
-    @Arg('input', () => CredentialInput) input: CredentialInput
+    @Arg('input', () => CredentialInput) input: CredentialInput,
   ): Promise<Host> {
     const [host] = await Promise.all([
       Host.findOneOrFail({

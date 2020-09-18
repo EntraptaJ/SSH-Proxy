@@ -7,7 +7,7 @@ import { Host } from '../Hosts/HostModel';
 import { User } from '../Users/UserModel';
 
 export async function performAuth(
-  ctx: AuthContext
+  ctx: AuthContext,
 ): Promise<{ host: Host; user: User; credentials: Credential }> {
   /**
    * Split username to array with "." as the seperator

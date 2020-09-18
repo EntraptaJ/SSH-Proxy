@@ -1,12 +1,5 @@
 // src/Modules/Credentials/CredentialResolver.ts
-import {
-  Arg,
-  ID,
-  Mutation,
-  Query,
-  Resolver,
-  ResolverInterface,
-} from 'type-graphql';
+import { Arg, ID, Mutation, Query, Resolver } from 'type-graphql';
 import { User } from '../Users/UserModel';
 import { Credential } from './CredentialModel';
 
@@ -20,7 +13,7 @@ export class CredentialResolver {
   @Mutation(() => Credential)
   public async addUserToCredential(
     @Arg('credentialId', () => ID) credentialId: string,
-    @Arg('userId', () => ID) userId: string
+    @Arg('userId', () => ID) userId: string,
   ): Promise<Credential> {
     const [credential, user] = await Promise.all([
       Credential.findOneOrFail({

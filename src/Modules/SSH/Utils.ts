@@ -1,11 +1,11 @@
 // src/Modules/SSH/Utils.ts
 
-import { Client, ClientChannel, ExecOptions } from 'ssh2';
+import { Client, ClientChannel, ExecOptions, SFTPWrapper } from 'ssh2';
 
 export const execCommand = (
   command: string,
   sshClient: Client,
-  options: ExecOptions = {}
+  options: ExecOptions = {},
 ) =>
   new Promise<ClientChannel>((resolve, reject) => {
     console.log('Execing with: ', options);
@@ -16,5 +16,16 @@ export const execCommand = (
       }
 
       resolve(stream);
+    });
+  });
+
+export const sftpMe = (sshClient: Client) =>
+  new Promise<SFTPWrapper>((resolve, reject) => {
+    sshClient.sftp((err, sftp) => {
+      if (err) {
+        reject(err);
+      }
+
+      resolve(sftp);
     });
   });

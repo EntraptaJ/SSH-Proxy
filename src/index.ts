@@ -1,26 +1,27 @@
 // src/index.ts
 import { createApolloServer } from './Library/Apollo';
 import { connectDatabase } from './Library/Database';
+import { logger, LogMode } from './Library/Logger';
 import { startSSHServer } from './Modules/SSH/Server';
 
-console.info('Starting SSH-Proxy');
+logger.log(LogMode.INFO, 'Starting SSH-Proxy');
 
-console.info('Connecting to Database');
+logger.log(LogMode.INFO, 'Connecting to Database');
 
 /**
  * Connect to database
  */
 await connectDatabase();
 
-console.info('Database Connected');
+logger.log(LogMode.INFO, 'Database Connected');
 
 const [apiServer, sshServer] = await Promise.all([
   createApolloServer(),
   startSSHServer(),
 ]);
 
-console.info('Started SSH server');
+logger.log(LogMode.INFO, 'Started SSH server');
 
 apiServer.listen();
 
-console.info('SSH-Proxy server running');
+logger.log(LogMode.INFO, 'SSH-Proxy server running');

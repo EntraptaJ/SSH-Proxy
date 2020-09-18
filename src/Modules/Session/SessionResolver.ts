@@ -10,7 +10,6 @@ import {
 import { History } from '../History/HistoryModel';
 import { SessionFilter } from './SessionFilter';
 import { Session } from './SessionModel';
-import { SessionStatus } from './SessionState';
 
 @Resolver(Session)
 export class SessionResolver implements ResolverInterface<Session> {
@@ -24,7 +23,7 @@ export class SessionResolver implements ResolverInterface<Session> {
     @Arg('filter', () => SessionFilter, {
       nullable: true,
     })
-    filter: SessionFilter
+    filter: SessionFilter,
   ): Promise<Session[]> {
     return Session.find({
       where: {

@@ -1,25 +1,24 @@
 // src/Modules/SSH/Server.ts
 
+import pEvent from 'p-event';
+import type { Session as SSHSession } from 'ssh2';
 import {
   AuthContext,
   Client as SSHClient,
   PseudoTtyInfo,
   Server as SSHServer,
-  ServerChannel,
-  utils,
+  SetEnvInfo,
 } from 'ssh2';
-import { promisify } from 'util';
-import type { Session as SSHSession } from 'ssh2';
 import { config } from '../../Library/Config';
+import { logger, LogMode } from '../../Library/Logger';
+import { Credential } from '../Credentials/CredentialModel';
 import { getHostKeys } from '../Crypto/Keys';
 import { History } from '../History/HistoryModel';
 import { Host } from '../Hosts/HostModel';
-import { User } from '../Users/UserModel';
 import { Session } from '../Session/SessionModel';
 import { SessionStatus } from '../Session/SessionState';
-import pEvent from 'p-event';
+import { User } from '../Users/UserModel';
 import { performAuth } from './Auth';
-import { Credential } from '../Credentials/CredentialModel';
 import { execCommand } from './Utils';
 
 /**
@@ -39,6 +38,8 @@ export async function startSSHServer(): Promise<SSHServer> {
    * On Client connection to SSH server
    */
   sshServer.on('connection', async (client) => {
+    logger.log(LogMode.DEBUG, 'New SSH connection recieved');
+
     /**
      * Host database entry
      */
@@ -53,6 +54,8 @@ export async function startSSHServer(): Promise<SSHServer> {
 
     let pty: PseudoTtyInfo;
 
+    let env: SetEnvInfo;
+
     /**
      * SSH Session
      */
@@ -63,7 +66,7 @@ export async function startSSHServer(): Promise<SSHServer> {
       'authentication',
       {
         resolutionEvents: ['ready'],
-      }
+      },
     )) {
       try {
         const authResponse = await performAuth(authCtx);
@@ -92,7 +95,7 @@ export async function startSSHServer(): Promise<SSHServer> {
       'session',
       {
         resolutionEvents: ['end'],
-      }
+      },
     )) {
       console.log('Session created');
 
@@ -120,16 +123,14 @@ export async function startSSHServer(): Promise<SSHServer> {
         password: credentials.password,
       });
 
-      destSession.on('data', () => {
-        console.log('Dest session data?');
+      session.on('subsystem', () => {
+        logger.log(LogMode.DEBUG, 'Subsystem requested');
       });
 
-      session.on('sftp', () => {
-        console.log('SFTP');
-      });
+      session.on('env', (accept, reject, envInfo) => {
+        console.log('Env', envInfo);
 
-      session.on('env', (...data) => {
-        console.log('Env', data);
+        accept();
       });
 
       session.on('shell', async (acceptShell, reject) => {
@@ -144,7 +145,7 @@ export async function startSSHServer(): Promise<SSHServer> {
           },
           {
             sessionStatus: SessionStatus.CONNECTED,
-          }
+          },
         );
 
         destSession.shell(
@@ -184,7 +185,7 @@ export async function startSSHServer(): Promise<SSHServer> {
              * Pipe from client to serer, back into client
              */
             channel.pipe(serverChannel).pipe(channel);
-          }
+          },
         );
 
         console.log('Dest Session Ready');
@@ -246,7 +247,7 @@ export async function startSSHServer(): Promise<SSHServer> {
       },
       {
         sessionStatus: SessionStatus.EXIT,
-      }
+      },
     );
   });
 

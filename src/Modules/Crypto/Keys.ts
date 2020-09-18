@@ -7,7 +7,7 @@ export const generateKeyPair = (): Promise<pki.rsa.KeyPair> =>
       if (err) reject(err);
 
       resolve(keypair);
-    })
+    }),
   );
 
 export async function generateHostKeys(): Promise<string> {

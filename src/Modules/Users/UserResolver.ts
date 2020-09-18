@@ -1,13 +1,5 @@
 // src/Modules/Users/UserResolver.ts
-import {
-  Arg,
-  FieldResolver,
-  ID,
-  Mutation,
-  Query,
-  Resolver,
-  ResolverInterface,
-} from 'type-graphql';
+import { Arg, ID, Mutation, Query, Resolver } from 'type-graphql';
 import { UserInput } from './UserInput';
 import { User } from './UserModel';
 
@@ -20,7 +12,7 @@ export class UserResolver {
 
   @Mutation(() => User)
   public async createUser(
-    @Arg('input', () => UserInput) input: UserInput
+    @Arg('input', () => UserInput) input: UserInput,
   ): Promise<User> {
     const user = User.create(input);
 
@@ -29,7 +21,7 @@ export class UserResolver {
 
   @Mutation(() => [User])
   public async deleteUser(
-    @Arg('userId', () => ID) userId: string
+    @Arg('userId', () => ID) userId: string,
   ): Promise<User[]> {
     const user = await User.findOneOrFail({
       where: {

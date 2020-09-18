@@ -3,5 +3,5 @@
   "watch": ["src"],
   "ext": "ts",
   "ignore": ["src/**/*.test.ts", "src/Library/Replayer.ts"],
-  "exec": "npm run dev:start"
+  "exec": "LOG_MODE=DEBUG npm run dev:start"
 }

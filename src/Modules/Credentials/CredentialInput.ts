@@ -1,5 +1,5 @@
 // src/Modules/Credentials/CredentialInput.ts
-import { Field, ID, InputType } from 'type-graphql';
+import { Field, InputType } from 'type-graphql';
 import { Credential } from './CredentialModel';
 
 @InputType()
