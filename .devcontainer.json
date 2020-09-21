@@ -5,11 +5,11 @@
   "runServices": ["Database", "SSHProxyDev"],
   "settings": {
     // This dev container does include /bin/bash if you prefer to use it instead of ash.
-    "terminal.integrated.shell.linux": "/bin/sh"
+    "terminal.integrated.shell.linux": "/bin/bash"
   },
 
   "remoteEnv": {
-    "SHELL": "/bin/sh"
+    "SHELL": "/bin/bash"
   },
 
   "extensions": [
