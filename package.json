@@ -24,7 +24,7 @@
   "devDependencies": {
     "@k-foss/ts-esnode": "^1.7.0",
     "@k-foss/ts-estests": "^1.0.6",
-    "@types/faker": "^5.1.2",
+    "@types/faker": "^5.1.4",
     "@types/node-forge": "^0.9.5",
     "@types/ssh2": "^0.5.44",
     "@typescript-eslint/eslint-plugin": "^4.4.1",
