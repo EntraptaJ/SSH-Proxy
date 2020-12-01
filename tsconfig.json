@@ -9,7 +9,6 @@
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "allowJs": true,
-    "importHelpers": false,
-    "useDefineForClassFields": false
+    "importHelpers": false
   }
 }

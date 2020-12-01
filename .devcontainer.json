@@ -2,24 +2,21 @@
   "name": "SSH-Proxy Container",
   "dockerComposeFile": "./docker-compose.yml",
   "service": "SSHProxyDev",
-  "runServices": ["Database", "SSHProxyDev"],
+  "runServices": ["Database", "SSHProxyDev", "Redis"],
   "settings": {
-    // This dev container does include /bin/bash if you prefer to use it instead of ash.
-    "terminal.integrated.shell.linux": "/bin/bash"
+    "editor.formatOnSave": true
   },
-
-  "remoteEnv": {
-    "SHELL": "/bin/bash"
-  },
+  "remoteUser": "node",
 
   "extensions": [
     "esbenp.prettier-vscode",
     "dbaeumer.vscode-eslint",
     "eamodio.gitlens",
     "gruntfuggly.todo-tree",
-    "alefragnani.bookmarks"
+    "alefragnani.bookmarks",
+    "ms-vscode.vscode-typescript-next"
   ],
 
   "workspaceFolder": "/workspace",
-  "postCreateCommand": "npm i"
+  "postCreateCommand": "sudo chown -R node:node /workspace && npm i"
 }

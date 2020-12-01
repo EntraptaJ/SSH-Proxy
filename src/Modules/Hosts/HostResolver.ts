@@ -8,19 +8,30 @@ import {
   Resolver,
   Root,
 } from 'type-graphql';
+import { Service } from 'typedi';
 import { CredentialInput } from '../Credentials/CredentialInput';
 import { Credential } from '../Credentials/CredentialModel';
+import { CredentialRepository } from '../Credentials/CredentialRepository';
 import { HostInput } from './HostInput';
 import { Host } from './HostModel';
 
+@Service()
 @Resolver(Host)
 export class HostResovler {
-  @Query(() => [Host])
+  public constructor(private credentialRepository: CredentialRepository) {
+    console.log('HostResolver created!');
+  }
+
+  @Query(() => [Host], {
+    description: 'Query all Host entities',
+  })
   public async hosts(): Promise<Host[]> {
     return Host.find();
   }
 
-  @Mutation(() => [Host])
+  @Mutation(() => [Host], {
+    description: 'Create a new Host entity',
+  })
   public async createHost(
     @Arg('input', () => HostInput) input: HostInput,
   ): Promise<Host[]> {

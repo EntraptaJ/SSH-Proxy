@@ -1,6 +1,10 @@
 // src/Modules/Crypto/Keys.ts
 import { pki, ssh } from 'node-forge';
 
+/**
+ * Generate a new RSA Keypair
+ * @returns Promise resolving to a PKI RSA Keypair
+ */
 export const generateKeyPair = (): Promise<pki.rsa.KeyPair> =>
   new Promise((resolve, reject) =>
     pki.rsa.generateKeyPair({ bits: 2048 }, (err, keypair) => {

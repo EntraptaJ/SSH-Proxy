@@ -7,7 +7,7 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { Credential } from '../Credentials/CredentialModel';
+import type { Credential } from '../Credentials/CredentialModel';
 
 @ObjectType()
 @Entity()

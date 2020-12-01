@@ -7,10 +7,12 @@ import {
   ResolverInterface,
   Root,
 } from 'type-graphql';
+import { Service } from 'typedi';
 import { History } from '../History/HistoryModel';
 import { SessionFilter } from './SessionFilter';
 import { Session } from './SessionModel';
 
+@Service()
 @Resolver(Session)
 export class SessionResolver implements ResolverInterface<Session> {
   @Query(() => String)

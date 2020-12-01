@@ -1,36 +1,43 @@
 // src/Modules/Users/UserResolver.ts
 import { Arg, ID, Mutation, Query, Resolver } from 'type-graphql';
+import { Service } from 'typedi';
+import { APILogger } from '../Logger/APILoggerService';
 import { UserInput } from './UserInput';
 import { User } from './UserModel';
+import { UserRepository } from './UserRepository';
 
+@Service()
 @Resolver(User)
 export class UserResolver {
-  @Query(() => [User])
-  public async users(): Promise<User[]> {
-    return User.find();
+  public constructor(
+    private userRepository: UserRepository,
+    private logger: APILogger,
+  ) {
+    console.log('UserResolver created!');
   }
 
-  @Mutation(() => User)
+  @Query(() => [User], {
+    description: 'Query all user entities',
+  })
+  public async users(): Promise<User[]> {
+    return this.userRepository.findAll();
+  }
+
+  @Mutation(() => User, {
+    description: 'Create a new user entity',
+  })
   public async createUser(
     @Arg('input', () => UserInput) input: UserInput,
   ): Promise<User> {
-    const user = User.create(input);
-
-    return user.save();
+    return this.userRepository.createUser(input);
   }
 
-  @Mutation(() => [User])
+  @Mutation(() => [User], {
+    description: 'Delete a user entity',
+  })
   public async deleteUser(
     @Arg('userId', () => ID) userId: string,
   ): Promise<User[]> {
-    const user = await User.findOneOrFail({
-      where: {
-        id: userId,
-      },
-    });
-
-    await user.remove();
-
-    return User.find();
+    return this.userRepository.findAndDeleteUser(userId);
   }
 }

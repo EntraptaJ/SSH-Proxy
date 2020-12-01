@@ -1,19 +1,33 @@
 // src/Library/Context.ts
+import { FastifyRequest } from 'fastify';
+import { Container } from 'typedi';
+import { ContainerInterface } from 'typeorm';
 
-interface Context {
-  randomValue: 42;
+export interface Context {
+  requestId: string;
+
+  container: ContainerInterface;
 }
+
+interface ContextRequest {
+  request: FastifyRequest;
+}
+
+let count = 0;
 
 /**
  * Get the GraphQL Context
  */
-export async function getGQLContext(): Promise<Context> {
-  /**
-   * The answer to life and everything in the universe
-   */
-  const answerToEverything = 42;
+export function getGQLContext({ request, ...test }: ContextRequest): Context {
+  const requestId =
+    process.env.NODE_ENV === 'TEST'
+      ? (count++).toString()
+      : (request.id as string);
 
-  return {
-    randomValue: answerToEverything,
-  };
+  const container = Container.of(requestId);
+
+  const context = { requestId, container };
+  container.set('context', context);
+
+  return context;
 }

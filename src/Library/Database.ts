@@ -1,10 +1,12 @@
 // src/Library/TypeORM.ts
 import { ClassType } from 'type-graphql';
+import Container from 'typedi';
 import {
   Connection,
   createConnection,
   EntitySchema,
   EntitySubscriberInterface,
+  useContainer,
 } from 'typeorm';
 import { findModuleFiles } from '../Utils//moduleFileFinder';
 import { config } from './Config';
@@ -18,7 +20,7 @@ export async function getEntities(): Promise<EntitySchema[]> {
   const modelModules = await findModuleFiles(/.*Model\.((ts|js)x?)/);
 
   return modelModules.flatMap((resolverModule) =>
-    Object.values(resolverModule as { [key: string]: EntitySchema })
+    Object.values(resolverModule as { [key: string]: EntitySchema }),
   );
 }
 
@@ -30,11 +32,11 @@ export async function getEntitySubscribers(): Promise<
   ClassType<EntitySubscriberInterface>[]
 > {
   const entitySubscriberModules = await findModuleFiles<EntitySubscriberModule>(
-    /.*EntitySubscriber\.((ts|js)x?)/
+    /.*EntitySubscriber\.((ts|js)x?)/,
   );
 
   return entitySubscriberModules.flatMap((entitySubscriberModule) =>
-    Object.values(entitySubscriberModule)
+    Object.values(entitySubscriberModule),
   );
 }
 
@@ -50,9 +52,14 @@ export async function connectDatabase(testing = false): Promise<Connection> {
     getEntitySubscribers(),
   ]);
 
+  /**
+   * Use TypeORM Container
+   */
+  useContainer(Container);
+
   return createConnection({
     type: 'postgres',
-    database: config.database.database,
+    database: testing ? 'test-db' : config.database.database,
     username: config.database.username,
     password: config.database.password,
     port: config.database.port,

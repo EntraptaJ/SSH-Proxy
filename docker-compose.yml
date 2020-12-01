@@ -6,6 +6,7 @@ volumes:
 
 networks:
   internalDB:
+  internalRedis:
 
 services:
   SSHProxyDev:
@@ -23,8 +24,6 @@ services:
 
   Database:
     image: postgres:alpine
-    ports:
-      - 5432:5432
     volumes:
       - databaseData:/var/lib/postgresql/data
     networks:
@@ -32,3 +31,8 @@ services:
     environment:
       POSTGRES_PASSWORD: pgpass
       POSTGRES_DB: ssh-proxy
+
+  Redis:
+    image: redis:alpine3.12
+    networks:
+      - internalRedis

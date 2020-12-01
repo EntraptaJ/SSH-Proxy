@@ -9,9 +9,9 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { Host } from '../Hosts/HostModel';
-import { Session } from '../Session/SessionModel';
-import { User } from '../Users/UserModel';
+import type { Host } from '../Hosts/HostModel';
+import type { Session } from '../Session/SessionModel';
+import type { User } from '../Users/UserModel';
 
 @ObjectType()
 @Entity()
@@ -30,10 +30,10 @@ export class History extends BaseEntity {
   })
   public shellOutput: string;
 
-  @ManyToOne(() => User)
+  @ManyToOne('User')
   public user: User;
 
-  @ManyToOne(() => Host)
+  @ManyToOne('Host')
   public host: Host;
 
   @ManyToOne('Session', 'history')

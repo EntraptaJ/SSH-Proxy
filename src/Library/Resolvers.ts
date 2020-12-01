@@ -2,30 +2,45 @@
 import { ResolverFn } from 'apollo-server';
 import { GraphQLSchema } from 'graphql';
 import 'reflect-metadata';
-import { buildSchema, NonEmptyArray } from 'type-graphql';
+import {
+  buildSchema,
+  NonEmptyArray,
+  ObjectType,
+  ResolverData,
+} from 'type-graphql';
 import { findModuleFiles } from '../Utils/moduleFileFinder';
+import type { Context } from './Context';
+
+type ResolverModule = { [key: string]: ResolverFn };
 
 /**
- * Load all TypeGraphQL Resolver Modules
+ * Get all resolvers functions within the Modules folder
  *
- * @returns Array containing TypeGraphQL Resolver Module files from `srsc/Modules/` matching `*Resolver.(ts|js)x?`
+ * @returns Promise resolving to all exported classes within Resolver modules within `src/Modules`
  */
 export async function getResolvers(): Promise<NonEmptyArray<ResolverFn>> {
-  const resolverModules = await findModuleFiles(/.*Resolver\.((ts|js)x?)/);
+  const resolverModules = await findModuleFiles<ResolverModule>(
+    /.*Resolver\.((ts|js)x?)/,
+  );
 
-  return resolverModules.flatMap((resolverModule) =>
-    Object.values(resolverModule as { [key: string]: ResolverFn })
-  ) as NonEmptyArray<ResolverFn>;
+  const resolverFns = Object.freeze(
+    resolverModules.flatMap((resolverModule) => Object.values(resolverModule)),
+  );
+
+  return [resolverFns[0], ...resolverFns.slice(1)];
 }
 
 /**
- * Build GraphQL Schema from TypeGraphQL Resolvers
- * @param resolvers Array of TypeGraphQL Resolvers
+ * Build a GraphQL schema with the provided resovlers
+ * @param resolvers Array of `type-graphql` resolvers
+ *
+ * @returns Promise resolving to the created GraphQL schema
  */
 export async function buildGQLSchema(
-  resolvers: NonEmptyArray<ResolverFn>
+  resolvers: NonEmptyArray<ResolverFn>,
 ): Promise<GraphQLSchema> {
   return buildSchema({
     resolvers: resolvers,
+    container: ({ context }: ResolverData<Context>) => context.container,
   });
 }
