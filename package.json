@@ -28,7 +28,7 @@
     "@types/node-forge": "^0.9.5",
     "@types/ssh2": "^0.5.44",
     "@typescript-eslint/eslint-plugin": "^4.4.1",
-    "@typescript-eslint/parser": "^4.4.1",
+    "@typescript-eslint/parser": "^4.9.1",
     "apollo-server-testing": "^3.0.0-alpha.3",
     "eslint": "^7.14.0",
     "eslint-config-prettier": "^6.15.0",
