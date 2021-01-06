@@ -36,7 +36,7 @@ export async function performAuth(
   const username = usernameArray.join('.');
 
   const [user, credentials] = await Promise.all([
-    User.findOneOrFail({
+    getConnection().getRepository(User).findOneOrFail({
       where: {
         username,
       },

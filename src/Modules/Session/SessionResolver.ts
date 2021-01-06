@@ -16,7 +16,7 @@ import { Session } from './SessionModel';
 @Resolver(Session)
 export class SessionResolver implements ResolverInterface<Session> {
   @Query(() => String)
-  public async helloWorld(): Promise<'helloWorld'> {
+  public helloWorld(): 'helloWorld' {
     return 'helloWorld';
   }
 

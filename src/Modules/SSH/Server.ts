@@ -7,7 +7,6 @@ import {
   Client as SSHClient,
   PseudoTtyInfo,
   Server as SSHServer,
-  SetEnvInfo,
 } from 'ssh2';
 import { config } from '../../Library/Config';
 import { logger, LogMode } from '../../Library/Logger';
@@ -37,6 +36,7 @@ export async function startSSHServer(): Promise<SSHServer> {
   /**
    * On Client connection to SSH server
    */
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises
   sshServer.on('connection', async (client) => {
     logger.log(LogMode.DEBUG, 'New SSH connection recieved');
 
@@ -54,12 +54,12 @@ export async function startSSHServer(): Promise<SSHServer> {
 
     let pty: PseudoTtyInfo;
 
-    let env: SetEnvInfo;
+    // let env: SetEnvInfo;
 
     /**
      * SSH Session
      */
-    let destSession: SSHClient = new SSHClient();
+    const destSession: SSHClient = new SSHClient();
 
     for await (const authCtx of pEvent.iterator<string, AuthContext>(
       client,
@@ -101,7 +101,7 @@ export async function startSSHServer(): Promise<SSHServer> {
 
       const session = accept();
 
-      session.on('pty', (accept, reject, info) => {
+      session.on('pty', (accept, _reject, info) => {
         console.log('Starting PTY', info);
 
         pty = info;
@@ -127,13 +127,14 @@ export async function startSSHServer(): Promise<SSHServer> {
         logger.log(LogMode.DEBUG, 'Subsystem requested');
       });
 
-      session.on('env', (accept, reject, envInfo) => {
+      session.on('env', (accept, _reject, envInfo) => {
         console.log('Env', envInfo);
 
         accept();
       });
 
-      session.on('shell', async (acceptShell, reject) => {
+      // eslint-disable-next-line @typescript-eslint/no-misused-promises
+      session.on('shell', async (acceptShell, _reject) => {
         // TODO: Handle dest session not "ready"ing / rejcet
         await pEvent(destSession, 'ready');
 
@@ -163,12 +164,13 @@ export async function startSSHServer(): Promise<SSHServer> {
 
             let line = ``;
 
-            channel.on('data', async (msg) => {
+            // eslint-disable-next-line @typescript-eslint/no-misused-promises
+            channel.on('data', async (msg: string) => {
               line += msg.toString();
 
               if (line.endsWith('\r\n')) {
                 for (const newLine of line.split('\r\n')) {
-                  let history = History.create({
+                  const history = History.create({
                     host,
                     user,
                     shellOutput: newLine,
@@ -191,7 +193,8 @@ export async function startSSHServer(): Promise<SSHServer> {
         console.log('Dest Session Ready');
       });
 
-      session.on('exec', async (accept, reject, info) => {
+      // eslint-disable-next-line @typescript-eslint/no-misused-promises
+      session.on('exec', async (accept, _reject, info) => {
         console.log('Got exec request', info);
 
         await pEvent(destSession, 'ready');
@@ -207,18 +210,19 @@ export async function startSSHServer(): Promise<SSHServer> {
 
         let line = ``;
 
-        execChannel.on('data', (msg) => {
+        execChannel.on('data', (msg: string) => {
           console.log('ExecChannel Data', msg.toString());
         });
 
-        clientStream.on('data', async (msg) => {
+        // eslint-disable-next-line @typescript-eslint/no-misused-promises
+        clientStream.on('data', async (msg: string) => {
           console.log('clientData: ', msg.toString());
 
           line += msg.toString();
 
           if (line.endsWith('\r\n')) {
             for (const newLine of line.split('\r\n')) {
-              let history = History.create({
+              const history = History.create({
                 host,
                 user,
                 shellOutput: newLine,

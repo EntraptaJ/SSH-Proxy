@@ -1,8 +1,6 @@
 // src/Modules/Credentials/CredentialResolver.ts
 import { Arg, ID, Mutation, Query, Resolver } from 'type-graphql';
 import { Service } from 'typedi';
-import { APILogger } from '../Logger/APILoggerService';
-import { User } from '../Users/UserModel';
 import { UserRepository } from '../Users/UserRepository';
 import { CredentialRepository } from './CredentialRepository';
 import { Credential } from './CredentialModel';

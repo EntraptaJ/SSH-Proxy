@@ -1,12 +1,11 @@
 // src/Modules/Users/UserModelFactory.ts
-import { Factory } from 'factory.io';
+import { FactoryBuilder } from 'factory.io';
 import { User } from './UserModel';
 import { internet } from 'faker';
 
-export const userFactory = new Factory(User)
-
+export const userFactory = FactoryBuilder.of(User)
   .props({
     password: 'password',
     username: internet.userName(),
   })
-  .done();
+  .build();

@@ -1,11 +1,11 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 // src/Modules/Users/UserResolver.test.ts
 import { TestSuite } from '@k-foss/ts-estests';
-import { strictEqual, notStrictEqual } from 'assert';
+import { notStrictEqual, strictEqual } from 'assert';
 import 'reflect-metadata';
 import { getConnection } from 'typeorm';
 import { createApolloTestClient } from '../../Library/Apollo';
 import { connectDatabase } from '../../Library/Database';
-import { saveOne } from '../../Library/Factory';
 import { User } from './UserModel';
 import { userFactory } from './UserModelFactory';
 
@@ -15,7 +15,7 @@ export class UserResolverTest extends TestSuite {
   public async test(): Promise<void> {
     await connectDatabase(true);
 
-    const users = await userFactory.buildMany(5);
+    const users = userFactory.buildMany(5);
 
     const repository = getConnection().getRepository(User);
     await repository.save(users);

@@ -18,6 +18,7 @@ import { Host } from './HostModel';
 @Service()
 @Resolver(Host)
 export class HostResovler {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars-experimental
   public constructor(private credentialRepository: CredentialRepository) {
     console.log('HostResolver created!');
   }

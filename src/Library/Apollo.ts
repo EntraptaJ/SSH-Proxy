@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 // src/Library/Apollo.ts
 import { Container, ContainerInstance } from 'typedi';
 import { GraphQLRequestContext } from 'apollo-server-plugin-base';

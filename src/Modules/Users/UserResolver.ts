@@ -11,6 +11,7 @@ import { UserRepository } from './UserRepository';
 export class UserResolver {
   public constructor(
     private userRepository: UserRepository,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars-experimental
     private logger: APILogger,
   ) {
     console.log('UserResolver created!');

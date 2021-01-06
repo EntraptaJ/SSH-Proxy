@@ -30,6 +30,8 @@ const [apiServer, sshServer] = await Promise.all([
   startSSHServer(),
 ]);
 
+sshServer.listen(8022, '0.0.0.0');
+
 await webServer.register(apiServer.createHandler());
 
 await webServer.listen(8080, config.bindHost);
