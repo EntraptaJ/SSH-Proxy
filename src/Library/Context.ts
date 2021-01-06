@@ -18,7 +18,7 @@ let count = 0;
 /**
  * Get the GraphQL Context
  */
-export function getGQLContext({ request, ...test }: ContextRequest): Context {
+export function getGQLContext({ request }: ContextRequest): Context {
   const requestId =
     process.env.NODE_ENV === 'TEST'
       ? (count++).toString()

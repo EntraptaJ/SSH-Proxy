@@ -1,7 +1,7 @@
 // src/Modules/Credentials/CredentialRepository.ts
 import { Service } from 'typedi';
-import { EntityManager, FindOneOptions, ObjectID, Repository } from 'typeorm';
-import { InjectRepository, InjectManager } from 'typeorm-typedi-extensions';
+import { FindOneOptions, ObjectID, Repository } from 'typeorm';
+import { InjectRepository } from 'typeorm-typedi-extensions';
 import { CredentialInput } from './CredentialInput';
 import { Credential } from './CredentialModel';
 
@@ -46,12 +46,14 @@ export class CredentialRepository {
   /**
    * Finds first entity that matches given options.
    */
-  findOne(
+  public findOne(
     id?: string | number | Date | ObjectID,
     options?: FindOneOptions<Credential>,
   ): Promise<Credential>;
-  findOne(options?: FindOneOptions<Credential>): Promise<Credential>;
-  public findOne(options?: any, params?: any): Promise<Credential> {
+
+  public findOne(options?: FindOneOptions<Credential>): Promise<Credential>;
+
+  public findOne(options?: unknown, params?: unknown): Promise<Credential> {
     return this.credentialRepository.findOneOrFail(options, params);
   }
 

@@ -1,15 +1,10 @@
 // src/Library/Resolvers.ts
-import { ResolverFn } from 'apollo-server';
 import { GraphQLSchema } from 'graphql';
 import 'reflect-metadata';
-import {
-  buildSchema,
-  NonEmptyArray,
-  ObjectType,
-  ResolverData,
-} from 'type-graphql';
+import { buildSchema, NonEmptyArray, ResolverData } from 'type-graphql';
 import { findModuleFiles } from '../Utils/moduleFileFinder';
 import type { Context } from './Context';
+import type { ResolverFn } from 'apollo-server';
 
 type ResolverModule = { [key: string]: ResolverFn };
 

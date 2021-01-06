@@ -16,7 +16,7 @@ const processDirectoryCache = new Map<string, Dirent[]>();
  */
 export async function findModuleFiles<T>(
   fileMatcher: FileMatcher,
-  rootDir: string = coreModulesDir
+  rootDir: string = coreModulesDir,
 ): Promise<T[]> {
   function processDirectory(directoryPath: string): Promise<T>[] {
     let directoryContents = processDirectoryCache.get(directoryPath);

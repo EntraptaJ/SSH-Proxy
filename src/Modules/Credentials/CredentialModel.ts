@@ -34,7 +34,7 @@ export class Credential extends BaseEntity {
   @Field(() => [User])
   @ManyToMany(() => User, { lazy: true })
   @JoinTable()
-  public users: User[];
+  public users: Promise<User[]> | User[];
 
   @ManyToOne(() => Host, (host) => host.credentials)
   public host: Host;

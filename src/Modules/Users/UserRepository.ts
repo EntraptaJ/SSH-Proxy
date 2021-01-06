@@ -1,7 +1,7 @@
 // src/Modules/Users/UserRepository.ts
 import { Service } from 'typedi';
-import { EntityManager, FindOneOptions, ObjectID, Repository } from 'typeorm';
-import { InjectRepository, InjectManager } from 'typeorm-typedi-extensions';
+import { FindOneOptions, ObjectID, Repository } from 'typeorm';
+import { InjectRepository } from 'typeorm-typedi-extensions';
 import { UserInput } from './UserInput';
 import { User } from './UserModel';
 
@@ -46,12 +46,14 @@ export class UserRepository {
   /**
    * Finds first entity that matches given options.
    */
-  findOne(
+  public findOne(
     id?: string | number | Date | ObjectID,
     options?: FindOneOptions<User>,
   ): Promise<User>;
-  findOne(options?: FindOneOptions<User>): Promise<User>;
-  public findOne(options?: any, params?: any): Promise<User> {
+
+  public findOne(options?: FindOneOptions<User>): Promise<User>;
+
+  public findOne(options?: unknown, params?: unknown): Promise<User> {
     return this.userRepository.findOneOrFail(options, params);
   }
 

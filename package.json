@@ -4,6 +4,7 @@
   "description": "SSH Proxy",
   "main": "src/index.ts",
   "dependencies": {
+    "apollo-server": "^3.0.0-alpha.3",
     "apollo-server-fastify": "^3.0.0-alpha.3",
     "apollo-server-plugin-base": "^0.10.3",
     "class-validator": "^0.12.2",

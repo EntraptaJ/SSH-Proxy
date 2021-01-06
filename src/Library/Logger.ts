@@ -9,7 +9,7 @@ export enum LogMode {
 export class Logger {
   public logMode: LogMode;
 
-  constructor() {
+  public constructor() {
     this.logMode = LogMode[process.env.LOG_MODE] ?? LogMode.INFO;
   }
 
@@ -19,7 +19,7 @@ export class Logger {
    * @param msg String to log
    * @param args Extra args
    */
-  public log(mode: LogMode, msg: string, ...args: any[]): void {
+  public log(mode: LogMode, msg: string, ...args: unknown[]): void {
     if (mode < this.logMode) {
       return;
     }
